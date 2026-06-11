@@ -134,7 +134,6 @@
   <p>מלאו את הפרטים ונחזור אליכם בהקדם. ההרשמה פשוטה ולוקחת כ-3 דקות.</p>
   <div class="hero-badges">
     <div class="badge">✅ ללא עלות הצטרפות</div>
-    <div class="badge">🔄 מקסום רווחים בחזרה</div>
     <div class="badge">📍 עבודה לפי מסלול</div>
   </div>
 </div>
@@ -632,7 +631,7 @@ function goToSection3() {
   const summaryTitle = document.getElementById('summaryTitle');
   summaryTitle.textContent = `המשאיות שלי (${cards.length})`;
   summaryList.innerHTML = '';
-  cards.forEach(card => {
+  cards.forEach((card, i) => {
     const id = card.id.replace('truck-', '');
     const type = document.getElementById(`truckType${id}`)?.value || '';
     const body = document.getElementById(`truckBody${id}`)?.value || '';
