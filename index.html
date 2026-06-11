@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>הרשמת נהגים | GetRuck</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #1a2744; --navy-light: #243460; --orange: #F97316; --orange-dark: #ea6a0a;
+    --bg: #F0F2F8; --white: #ffffff; --gray: #6b7280; --gray-light: #e5e7eb;
+    --text: #111827; --success: #16a34a; --radius: 14px;
+    --shadow: 0 4px 24px rgba(26,39,68,0.10);
+  }
+  body { font-family: 'Heebo', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; direction: rtl; }
+
+  /* HERO */
+  .hero { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%); color: white; padding: 48px 20px 56px; text-align: center; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 40px; background: var(--bg); clip-path: ellipse(55% 100% at 50% 100%); }
+  .truck-icon { font-size: 64px; line-height: 1; margin-bottom: 16px; display: block; filter: drop-shadow(0 4px 12px rgba(249,115,22,0.4)); }
+  .hero h1 { font-size: clamp(28px, 6vw, 44px); font-weight: 900; letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 12px; }
+  .hero h1 span { color: var(--orange); }
+  .hero p { font-size: clamp(15px, 3vw, 18px); opacity: 0.85; max-width: 520px; margin: 0 auto 24px; line-height: 1.6; }
+  .hero-badges { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); border-radius: 100px; padding: 8px 18px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+  /* PROGRESS */
+  .progress-bar { display: flex; align-items: center; justify-content: center; padding: 28px 20px 8px; max-width: 580px; margin: 0 auto; }
+  .step-dot { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; position: relative; }
+  .step-dot:not(:last-child)::after { content: ''; position: absolute; top: 20px; left: 0; width: 100%; height: 3px; background: var(--gray-light); z-index: 0; transform: translateX(-50%); }
+  .step-dot.active:not(:last-child)::after { background: var(--orange); }
+  .dot-circle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; border: 3px solid var(--gray-light); background: white; color: var(--gray); position: relative; z-index: 1; transition: all 0.3s; }
+  .step-dot.active .dot-circle { border-color: var(--orange); background: var(--orange); color: white; }
+  .step-dot.done .dot-circle { border-color: var(--success); background: var(--success); color: white; }
+  .dot-label { font-size: 12px; font-weight: 600; color: var(--gray); text-align: center; white-space: nowrap; }
+  .step-dot.active .dot-label { color: var(--orange); }
+
+  /* FORM */
+  .form-wrapper { max-width: 620px; margin: 0 auto; padding: 0 16px 60px; }
+  .section-card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 24px; margin-bottom: 20px; display: none; }
+  .section-card.active { display: block; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 2px solid var(--gray-light); }
+  .section-icon { width: 52px; height: 52px; background: linear-gradient(135deg, var(--navy), var(--navy-light)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
+  .section-title h2 { font-size: 20px; font-weight: 800; color: var(--navy); margin-bottom: 2px; }
+  .section-title p { font-size: 13px; color: var(--gray); }
+
+  /* FIELDS */
+  .field-group { margin-bottom: 18px; }
+  label { display: block; font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 7px; }
+  label .required { color: var(--orange); margin-right: 2px; }
+  input[type="text"], input[type="email"], input[type="tel"], select {
+    width: 100%; padding: 14px 16px; font-size: 16px; font-family: 'Heebo', Arial, sans-serif;
+    border: 2px solid var(--gray-light); border-radius: 10px; background: #fafafa; color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s; outline: none; direction: rtl;
+  }
+  input:focus, select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(249,115,22,0.12); background: white; }
+  input.error, select.error { border-color: #dc2626; }
+  .field-error { font-size: 12px; color: #dc2626; margin-top: 4px; display: none; }
+  .field-error.show { display: block; }
+  .radio-group { display: flex; gap: 12px; flex-wrap: wrap; }
+  .radio-option { flex: 1; min-width: 130px; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 2px solid var(--gray-light); border-radius: 10px; cursor: pointer; transition: all 0.2s; font-size: 15px; font-weight: 600; }
+  .radio-option:has(input:checked) { border-color: var(--orange); background: #fff7ed; color: var(--orange-dark); }
+  .radio-option input { accent-color: var(--orange); width: 18px; height: 18px; }
+
+  /* TRUCK CARD */
+  .truck-list { display: flex; flex-direction: column; gap: 16px; }
+  .truck-card { border: 2px solid var(--gray-light); border-radius: var(--radius); padding: 20px; position: relative; background: #fafbff; transition: border-color 0.2s; }
+  .truck-card:focus-within { border-color: var(--orange); }
+  .truck-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .truck-number { font-size: 14px; font-weight: 800; color: var(--orange); background: #fff7ed; border: 1.5px solid var(--orange); border-radius: 8px; padding: 3px 10px; display: flex; align-items: center; gap: 6px; }
+  .remove-truck { background: none; border: none; color: #dc2626; font-size: 22px; cursor: pointer; padding: 4px; border-radius: 6px; line-height: 1; transition: background 0.2s; }
+  .remove-truck:hover { background: #fee2e2; }
+  .truck-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .truck-fields .field-group { margin-bottom: 0; }
+  .truck-fields .full-width { grid-column: 1 / -1; }
+  .add-truck-btn { width: 100%; padding: 14px; border: 2.5px dashed var(--navy-light); border-radius: var(--radius); background: none; color: var(--navy); font-size: 16px; font-weight: 700; font-family: 'Heebo', Arial, sans-serif; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
+  .add-truck-btn:hover { background: #eef0f8; border-color: var(--orange); color: var(--orange-dark); }
+
+  /* SUMMARY */
+  .summary-truck-item { background: white; border-radius: 10px; padding: 12px 16px; border: 1.5px solid #c7d4f7; display: flex; justify-content: space-between; align-items: center; }
+  .summary-truck-info { font-size: 14px; color: var(--navy); line-height: 1.5; }
+  .summary-truck-info strong { font-size: 15px; }
+
+  /* ROUTE DAYS */
+  .day-row { border: 2px solid var(--gray-light); border-radius: 12px; overflow: hidden; margin-bottom: 12px; transition: border-color 0.2s; }
+  .day-row.active { border-color: var(--orange); }
+  .day-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; background: #fafafa; }
+  .day-header:hover { background: #f0f2f8; }
+  .day-checkbox { width: 22px; height: 22px; accent-color: var(--orange); cursor: pointer; flex-shrink: 0; }
+  .day-name { font-size: 16px; font-weight: 700; color: var(--navy); flex: 1; }
+  .day-toggle { font-size: 12px; color: var(--gray); font-weight: 600; }
+  .day-fields { padding: 16px; background: #fffbf7; border-top: 1.5px solid var(--gray-light); display: none; }
+  .day-fields.open { display: block; }
+  .day-fields .field-group { margin-bottom: 12px; }
+  .day-fields .field-group:last-child { margin-bottom: 0; }
+
+  /* BUTTONS */
+  .form-nav { display: flex; gap: 12px; margin-top: 28px; }
+  .btn-next { flex: 1; padding: 16px; background: var(--orange); color: white; border: none; border-radius: var(--radius); font-size: 18px; font-weight: 800; font-family: 'Heebo', Arial, sans-serif; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+  .btn-next:hover { background: var(--orange-dark); }
+  .btn-next:active { transform: scale(0.98); }
+  .btn-back { padding: 16px 20px; background: white; color: var(--navy); border: 2px solid var(--gray-light); border-radius: var(--radius); font-size: 16px; font-weight: 700; font-family: 'Heebo', Arial, sans-serif; cursor: pointer; transition: all 0.2s; }
+  .btn-back:hover { border-color: var(--navy); background: #f5f6fa; }
+
+  /* SUCCESS */
+  .success-screen { display: none; text-align: center; padding: 40px 20px; }
+  .success-screen.active { display: block; }
+  .success-icon { font-size: 72px; margin-bottom: 20px; display: block; animation: pop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .success-screen h2 { font-size: 28px; font-weight: 900; color: var(--navy); margin-bottom: 10px; }
+  .success-screen p { font-size: 16px; color: var(--gray); line-height: 1.7; }
+
+  .spinner { display: none; width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .info-box { background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px; padding: 14px 16px; font-size: 14px; color: #1e40af; margin-bottom: 22px; display: flex; gap: 10px; align-items: flex-start; line-height: 1.6; }
+  .info-box span { font-size: 18px; }
+  .orange-box { background: #fff7ed; border: 1.5px solid #fed7aa; border-radius: 10px; padding: 14px 16px; font-size: 14px; color: #92400e; margin-bottom: 22px; display: flex; gap: 10px; align-items: flex-start; line-height: 1.6; }
+
+  @media (max-width: 480px) {
+    .section-card { padding: 20px 16px; }
+    .truck-fields { grid-template-columns: 1fr; }
+    .truck-fields .full-width { grid-column: 1; }
+    .hero { padding: 36px 16px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero" id="heroSection">
+  <span class="truck-icon">🚛</span>
+  <h1>הצטרפו אלינו כ<span>נהגים שלנו</span></h1>
+  <p>מלאו את הפרטים ונחזור אליכם בהקדם. ההרשמה פשוטה ולוקחת כ-3 דקות.</p>
+  <div class="hero-badges">
+    <div class="badge">✅ ללא עלות הצטרפות</div>
+    <div class="badge">🔄 מקסום רווחים בחזרה</div>
+    <div class="badge">📍 עבודה לפי מסלול</div>
+  </div>
+</div>
+
+<div id="valueSection" style="background: white; border-bottom: 3px solid #F97316;">
+  <div style="max-width: 620px; margin: 0 auto; padding: 28px 20px;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <div style="font-size: 13px; font-weight: 800; color: #F97316; margin-bottom: 6px;">למה כדאי לך להצטרף?</div>
+      <h2 style="font-size: 22px; font-weight: 900; color: #1a2744; line-height: 1.3;">אנחנו ממלאים לך את הדרך — גם בחזרה</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+      <div style="background: #f8f9ff; border-radius: 12px; padding: 18px 16px; border-right: 4px solid #F97316;">
+        <div style="font-size: 28px; margin-bottom: 8px;">🔄</div>
+        <div style="font-size: 15px; font-weight: 800; color: #1a2744; margin-bottom: 4px;">חזרה ריקה? לא אצלנו</div>
+        <div style="font-size: 13px; color: #6b7280; line-height: 1.5;">אנחנו משבצים לך הזמנות על מסלול החזרה שלך — מרוויח פעמיים על אותו יום נסיעה</div>
+      </div>
+      <div style="background: #f8f9ff; border-radius: 12px; padding: 18px 16px; border-right: 4px solid #1a2744;">
+        <div style="font-size: 28px; margin-bottom: 8px;">📦</div>
+        <div style="font-size: 15px; font-weight: 800; color: #1a2744; margin-bottom: 4px;">עבודה שמתאימה לך</div>
+        <div style="font-size: 13px; color: #6b7280; line-height: 1.5;">הזמנות לפי האזור, סוג המשאית והזמינות שלך — בלי לבזבז זמן</div>
+      </div>
+      <div style="background: #f8f9ff; border-radius: 12px; padding: 18px 16px; border-right: 4px solid #F97316;">
+        <div style="font-size: 28px; margin-bottom: 8px;">💵</div>
+        <div style="font-size: 15px; font-weight: 800; color: #1a2744; margin-bottom: 4px;">יותר קילומטרים = יותר כסף</div>
+        <div style="font-size: 13px; color: #6b7280; line-height: 1.5;">נהגים שעובדים איתנו מגדילים הכנסה — פשוט כי הם לא חוזרים ריקים</div>
+      </div>
+      <div style="background: #f8f9ff; border-radius: 12px; padding: 18px 16px; border-right: 4px solid #1a2744;">
+        <div style="font-size: 28px; margin-bottom: 8px;">🤝</div>
+        <div style="font-size: 15px; font-weight: 800; color: #1a2744; margin-bottom: 4px;">אנחנו דואגים לך</div>
+        <div style="font-size: 13px; color: #6b7280; line-height: 1.5;">יש לנו נציג זמין לכל שאלה — אתה לא לבד בדרך</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="progress-bar" id="progressBar">
+  <div class="step-dot active" id="dot1"><div class="dot-circle">1</div><div class="dot-label">פרטי העסק</div></div>
+  <div class="step-dot" id="dot2"><div class="dot-circle">2</div><div class="dot-label">המשאיות שלי</div></div>
+  <div class="step-dot" id="dot3"><div class="dot-circle">3</div><div class="dot-label">סיכום וקו קבוע</div></div>
+</div>
+
+<div class="form-wrapper">
+
+  <!-- SECTION 1 -->
+  <div class="section-card active" id="section1">
+    <div class="section-header">
+      <div class="section-icon">👤</div>
+      <div class="section-title"><h2>פרטי העסק שלך</h2><p>מלא את הפרטים כפי שהם מופיעים ברשומות העסק</p></div>
+    </div>
+    <div class="field-group">
+      <label for="fullName">שם מלא <span class="required">*</span></label>
+      <input type="text" id="fullName" placeholder="ישראל ישראלי" autocomplete="name">
+      <div class="field-error" id="err-fullName">נא להזין שם מלא</div>
+    </div>
+    <div class="field-group">
+      <label for="businessName">שם מלא של העסק <span class="required">*</span></label>
+      <input type="text" id="businessName" placeholder="הובלות ישראלי בע״מ">
+      <div class="field-error" id="err-businessName">נא להזין שם עסק</div>
+    </div>
+    <div class="field-group">
+      <label>סוג עסק <span class="required">*</span></label>
+      <div class="radio-group">
+        <label class="radio-option"><input type="radio" name="bizType" value="חפ"> חברה בע״מ (ח.פ)</label>
+        <label class="radio-option"><input type="radio" name="bizType" value="עוסק מורשה"> עוסק מורשה</label>
+      </div>
+      <div class="field-error" id="err-bizType">נא לבחור סוג עסק</div>
+    </div>
+    <div class="field-group">
+      <label for="bizId">מספר ח.פ / עוסק מורשה <span class="required">*</span></label>
+      <input type="text" id="bizId" placeholder="510000000" maxlength="9">
+      <div class="field-error" id="err-bizId">נא להזין מספר תקין</div>
+    </div>
+    <div class="field-group">
+      <label for="address">כתובת העסק <span class="required">*</span></label>
+      <input type="text" id="address" placeholder="רחוב הרצל 1, תל אביב">
+      <div class="field-error" id="err-address">נא להזין כתובת</div>
+    </div>
+    <div class="field-group">
+      <label for="phone">מספר טלפון <span class="required">*</span></label>
+      <input type="tel" id="phone" placeholder="050-1234567" maxlength="10" autocomplete="tel">
+      <div class="field-error" id="err-phone">נא להזין מספר טלפון</div>
+    </div>
+    <div class="field-group">
+      <label for="email">כתובת אימייל <span class="required">*</span></label>
+      <input type="email" id="email" placeholder="israel@email.com" autocomplete="email">
+      <div class="field-error" id="err-email">נא להזין כתובת אימייל תקינה</div>
+    </div>
+    <div class="form-nav">
+      <button class="btn-next" onclick="goToSection2()">המשך לשלב הבא ←</button>
+    </div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="section-card" id="section2">
+    <div class="section-header">
+      <div class="section-icon">🚛</div>
+      <div class="section-title"><h2>המשאיות שלי</h2><p>הוסף את כל כלי הרכב שברשותך</p></div>
+    </div>
+    <div class="info-box"><span>💡</span><div>יש לך יותר ממשאית אחת? לחץ על ״הוסף משאית נוספת״ בסוף הטופס.</div></div>
+    <div class="truck-list" id="truckList"></div>
+    <button type="button" class="add-truck-btn" onclick="addTruck()">➕ הוסף משאית נוספת</button>
+    <div class="form-nav">
+      <button class="btn-back" onclick="goToSection1()">← חזרה</button>
+      <button class="btn-next" onclick="goToSection3()">המשך לשלב הבא ←</button>
+    </div>
+  </div>
+
+  <!-- SECTION 3: SUMMARY + FIXED ROUTE -->
+  <div class="section-card" id="section3">
+    <div class="section-header">
+      <div class="section-icon">✅</div>
+      <div class="section-title"><h2>סיכום וקו קבוע</h2><p>בדוק את הפרטים ועדכן קו קבוע אם יש</p></div>
+    </div>
+
+    <div class="info-box" style="margin-bottom:22px;"><span>ℹ️</span><div>הפרטים שמילאת ישמשו אותנו לשליחת עבודות רלוונטיות עבור המשאיות שרשמת ולתשלומים. אנא ודא שהם נכונים ומדויקים לפני השליחה.</div></div>
+
+    <!-- BUSINESS SUMMARY -->
+    <div style="background:#f0f4ff; border-radius:12px; padding:18px; margin-bottom:22px; border:2px solid #c7d4f7;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:20px;">👤</span>
+          <div style="font-size:16px; font-weight:800; color:#1a2744;">פרטי העסק שלי</div>
+        </div>
+        <button type="button" onclick="openEditModal()" style="background:none; border:1.5px solid #1a2744; color:#1a2744; border-radius:8px; padding:6px 14px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit;">✏️ ערוך</button>
+      </div>
+      <div id="bizSummary" style="display:flex; flex-direction:column; gap:6px; font-size:14px; color:#374151;"></div>
+    </div>
+
+    <!-- TRUCK SUMMARY -->
+    <div style="background:#f0f4ff; border-radius:12px; padding:18px; margin-bottom:22px; border:2px solid #c7d4f7;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:20px;">🚛</span>
+          <div style="font-size:16px; font-weight:800; color:#1a2744;" id="summaryTitle">המשאיות שלי</div>
+        </div>
+        <button type="button" class="add-truck-btn" onclick="addTruckFromSummary()" style="width:auto; padding:8px 16px; font-size:14px; margin-top:0; border-style:dashed;">➕ הוסף משאית</button>
+      </div>
+      <div id="truckSummaryList" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div style="margin-top:14px; padding-top:12px; border-top:1.5px solid #c7d4f7; font-size:13px; color:#6b7280; line-height:1.6;">
+        🚛 יש לך עוד משאיות? ניתן להוסיף מפה בלחיצה על "הוסף משאית" למעלה<br>
+        <span style="color:#F97316; font-weight:700;">⚠️ רוצה לעדכן פרטי משאית קיימת? לחץ "חזרה" למטה</span>
+      </div>
+    </div>
+
+    <!-- FIXED ROUTE -->
+    <div id="routeSection" style="background:#fff7ed; border-radius:12px; padding:20px; margin-bottom:22px; border:2px solid #fed7aa;">
+      <div style="display:flex; align-items:flex-start; gap:12px; margin-bottom:16px;">
+        <span style="font-size:28px;">🔄</span>
+        <div>
+          <div style="font-size:16px; font-weight:800; color:#1a2744; margin-bottom:4px;">יש לך קו קבוע שאתה חוזר ממנו ריק?</div>
+          <div style="font-size:13px; color:#6b7280; line-height:1.6;">נהגים שמעדכנים אותנו על מסלול החזרה שלהם מקבלים <strong style="color:#F97316;">עדיפות ראשונה</strong> בהצבה להזמנות — ומרוויחים יותר!</div>
+        </div>
+      </div>
+      <div class="field-group" style="margin-bottom:16px;">
+        <label>האם יש לך קו קבוע?</label>
+        <div class="radio-group">
+          <label class="radio-option" onclick="toggleRouteFields(true)"><input type="radio" name="hasRoute" value="כן"> כן, יש לי</label>
+          <label class="radio-option" onclick="toggleRouteFields(false)"><input type="radio" name="hasRoute" value="לא"> לא כרגע</label>
+        </div>
+        <div id="err-hasRoute" style="display:none; font-size:13px; color:#dc2626; margin-top:8px; font-weight:600;">⚠️ נא לבחור האם יש לך קו קבוע</div>
+      </div>
+      <div id="routeFields" style="display:none;">
+        <div style="font-size:14px; color:#6b7280; margin-bottom:14px; font-weight:600;">✏️ סמן את הימים שבהם יש לך קו קבוע ומלא את הפרטים:</div>
+        <div id="daysContainer"></div>
+      </div>
+    </div>
+
+    <div class="form-nav">
+      <button class="btn-back" onclick="backToSection2()">← חזרה</button>
+      <button class="btn-next" id="submitBtn" onclick="submitForm()">
+        <span id="submitText">שלח הרשמה ✓</span>
+        <div class="spinner" id="submitSpinner"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-screen" id="successScreen">
+    <span class="success-icon">🎉</span>
+    <h2>ההרשמה התקבלה בהצלחה!</h2>
+    <p>תודה שנרשמת.<br>נציג מטעמנו יחזור אליך בקרוב לאישור סופי ותחילת עבודה.<br><br>
+    <strong>לפרטים נוספים ניתן ליצור קשר בוואטסאפ:</strong><br>
+    <a href="https://wa.me/972504951951" target="_blank" style="display:inline-block; margin-top:12px; background:#25D366; color:white; padding:12px 24px; border-radius:12px; font-size:16px; font-weight:800; text-decoration:none;">
+      💬 050-4951951
+    </a><br><br>
+    <strong>שיהיה בהצלחה בדרכים! 🚛</strong></p>
+  </div>
+
+
+<!-- EDIT MODAL -->
+<div id="editModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; overflow-y:auto;">
+  <div style="background:white; border-radius:16px; margin:20px auto; max-width:560px; padding:28px 24px; position:relative;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:16px; border-bottom:2px solid #e5e7eb;">
+      <div style="font-size:18px; font-weight:800; color:#1a2744;">✏️ עריכת פרטי העסק</div>
+      <button onclick="closeEditModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#6b7280; line-height:1;">✕</button>
+    </div>
+    <div class="field-group">
+      <label for="e_fullName">שם מלא <span class="required">*</span></label>
+      <input type="text" id="e_fullName">
+    </div>
+    <div class="field-group">
+      <label for="e_businessName">שם מלא של העסק <span class="required">*</span></label>
+      <input type="text" id="e_businessName">
+    </div>
+    <div class="field-group">
+      <label>סוג עסק</label>
+      <div class="radio-group">
+        <label class="radio-option"><input type="radio" name="e_bizType" value="חפ"> חברה בע״מ (ח.פ)</label>
+        <label class="radio-option"><input type="radio" name="e_bizType" value="עוסק מורשה"> עוסק מורשה</label>
+      </div>
+    </div>
+    <div class="field-group">
+      <label for="e_bizId">מספר ח.פ / עוסק מורשה <span class="required">*</span></label>
+      <input type="text" id="e_bizId" maxlength="9">
+    </div>
+    <div class="field-group">
+      <label for="e_address">כתובת העסק <span class="required">*</span></label>
+      <input type="text" id="e_address">
+    </div>
+    <div class="field-group">
+      <label for="e_phone">מספר טלפון <span class="required">*</span></label>
+      <input type="tel" id="e_phone" maxlength="10">
+    </div>
+    <div class="field-group">
+      <label for="e_email">כתובת אימייל <span class="required">*</span></label>
+      <input type="email" id="e_email">
+    </div>
+    <div style="display:flex; gap:12px; margin-top:20px;">
+      <button onclick="closeEditModal()" style="flex:1; padding:14px; background:white; color:#1a2744; border:2px solid #e5e7eb; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit;">ביטול</button>
+      <button onclick="saveEditModal()" style="flex:2; padding:14px; background:#F97316; color:white; border:none; border-radius:12px; font-size:16px; font-weight:800; cursor:pointer; font-family:inherit;">שמור שינויים ✓</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzCGxo5oU8AhhTEn1mq8M_VIgYDueMBoYETbf7AK_wCijVhFYDe242JK1T010PjNjDbow/exec';
+
+const truckTypes = ["בחר סוג משאית...","מסחרית","סניגל","דאבל","סמי","פול"];
+const truckBodyTypes = ["בחר סוג מרכב...","פלטה","רמפה פלטה","קירור","סגורה יבשה","סגורה וילונות","מנוף קדמי","מנוף אחורי","גרר"];
+const daysOfWeek = ["ראשון","שני","שלישי","רביעי","חמישי","שישי"];
+
+let truckCount = 0;
+
+// ====== TRUCK FUNCTIONS ======
+function addTruck() {
+  truckCount++;
+  const list = document.getElementById('truckList');
+  const card = document.createElement('div');
+  card.className = 'truck-card';
+  card.id = `truck-${truckCount}`;
+  const typeOptions = truckTypes.map((t,i) => `<option value="${i===0?'':t}"${i===0?' disabled selected':''}>${t}</option>`).join('');
+  const bodyOptions = truckBodyTypes.map((t,i) => `<option value="${i===0?'':t}"${i===0?' disabled selected':''}>${t}</option>`).join('');
+  card.innerHTML = `
+    <div class="truck-card-header">
+      <div class="truck-number">🚛 משאית ${truckCount}</div>
+      ${truckCount > 1 ? `<button type="button" class="remove-truck" onclick="removeTruck(${truckCount})">✕</button>` : ''}
+    </div>
+    <div class="truck-fields">
+      <div class="field-group">
+        <label>סוג משאית <span class="required">*</span></label>
+        <select id="truckType${truckCount}">${typeOptions}</select>
+        <div class="field-error" id="err-truckType${truckCount}">נא לבחור סוג משאית</div>
+      </div>
+      <div class="field-group">
+        <label>סוג מרכב <span class="required">*</span></label>
+        <select id="truckBody${truckCount}">${bodyOptions}</select>
+        <div class="field-error" id="err-truckBody${truckCount}">נא לבחור סוג מרכב</div>
+      </div>
+      <div class="field-group">
+        <label>מידות ארגז/פלטה <span class="required">*</span></label>
+        <input type="text" id="truckDimensions${truckCount}" placeholder="לדוגמה: 7×2.4 מטר">
+        <div class="field-error" id="err-truckDimensions${truckCount}">נא להזין מידות</div>
+      </div>
+      <div class="field-group">
+        <label>משקל העמסה מורשה (טון) <span class="required">*</span></label>
+        <input type="text" id="truckWeight${truckCount}" placeholder="לדוגמה: 12">
+        <div class="field-error" id="err-truckWeight${truckCount}">נא להזין משקל</div>
+      </div>
+      <div class="field-group">
+        <label>מספר רישוי <span class="required">*</span></label>
+        <input type="text" id="truckPlate${truckCount}" placeholder="12-345-67" maxlength="8" oninput="this.value=this.value.replace(/[^0-9\-]/g,'')">
+        <div class="field-error" id="err-truckPlate${truckCount}">נא להזין מספר רישוי תקין (ספרות בלבד)</div>
+      </div>
+      <div class="field-group">
+        <label>שנת ייצור</label>
+        <input type="text" id="truckYear${truckCount}" placeholder="2020" maxlength="4">
+      </div>
+      <div class="field-group full-width">
+        <label>הערות</label>
+        <input type="text" id="truckNotes${truckCount}" placeholder="ציוד מיוחד, אזורי פעילות, הגבלות...">
+      </div>
+    </div>`;
+  list.appendChild(card);
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function addTruckFromSummary() {
+  // go back to section 2 and add a truck
+  document.getElementById('section3').classList.remove('active');
+  document.getElementById('section2').classList.add('active');
+  document.getElementById('dot3').classList.remove('active');
+  document.getElementById('dot2').classList.remove('done');
+  document.getElementById('dot2').classList.add('active');
+  document.getElementById('dot2').querySelector('.dot-circle').textContent = '2';
+  document.getElementById('progressBar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => addTruck(), 300);
+}
+
+function removeTruck(n) {
+  const card = document.getElementById(`truck-${n}`);
+  if (card) card.remove();
+}
+
+// ====== DAYS SETUP ======
+function buildDaysUI() {
+  const container = document.getElementById('daysContainer');
+  container.innerHTML = '';
+  daysOfWeek.forEach(day => {
+    const row = document.createElement('div');
+    row.className = 'day-row';
+    row.id = `day-row-${day}`;
+    row.innerHTML = `
+      <div class="day-header" onclick="toggleDay('${day}')">
+        <input type="checkbox" class="day-checkbox" id="day-check-${day}" onclick="event.stopPropagation(); toggleDay('${day}')">
+        <div class="day-name">יום ${day}</div>
+        <div class="day-toggle" id="day-toggle-${day}">לחץ לפרטים ↓</div>
+      </div>
+      <div class="day-fields" id="day-fields-${day}">
+        <div class="field-group">
+          <label>מאיפה יוצא?</label>
+          <input type="text" id="day-from-${day}" placeholder="עיר / אזור יציאה">
+        </div>
+        <div class="field-group">
+          <label>איפה מסיים?</label>
+          <input type="text" id="day-to-${day}" placeholder="עיר / אזור סיום">
+        </div>
+        <div class="field-group">
+          <label>פרטים נוספים</label>
+          <input type="text" id="day-notes-${day}" placeholder="שעת יציאה, תדירות, הערות...">
+        </div>
+      </div>`;
+    container.appendChild(row);
+  });
+}
+
+function toggleDay(day) {
+  const checkbox = document.getElementById(`day-check-${day}`);
+  const fields = document.getElementById(`day-fields-${day}`);
+  const row = document.getElementById(`day-row-${day}`);
+  const toggle = document.getElementById(`day-toggle-${day}`);
+  const isOpen = fields.classList.contains('open');
+  if (!checkbox.checked) { checkbox.checked = true; }
+  if (isOpen) {
+    fields.classList.remove('open');
+    row.classList.remove('active');
+    toggle.textContent = 'לחץ לפרטים ↓';
+  } else {
+    fields.classList.add('open');
+    row.classList.add('active');
+    toggle.textContent = 'סגור ↑';
+  }
+}
+
+function toggleRouteFields(show) {
+  document.getElementById('routeFields').style.display = show ? 'block' : 'none';
+  if (show) buildDaysUI();
+}
+
+// ====== VALIDATION ======
+function showErr(id) { const el = document.getElementById(id); if (el) el.style.display = 'block'; }
+function hideErr(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+function setError(id) { const el = document.getElementById(id); if (el) el.classList.add('error'); showErr('err-' + id); }
+function clearError(id) { const el = document.getElementById(id); if (el) el.classList.remove('error'); hideErr('err-' + id); }
+
+function goToSection2() {
+  let valid = true;
+  [
+    { id: 'fullName', test: v => v.trim().length >= 2 },
+    { id: 'businessName', test: v => v.trim().length >= 2 },
+    { id: 'bizId', test: v => /^\d{8,9}$/.test(v.replace(/[-\s]/g,'')) },
+    { id: 'address', test: v => v.trim().length >= 5 },
+    { id: 'phone', test: v => v.replace(/[-\s]/g,'').length >= 9 },
+    { id: 'email', test: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
+  ].forEach(({ id, test }) => {
+    const val = document.getElementById(id)?.value || '';
+    if (!test(val)) { setError(id); valid = false; } else { clearError(id); }
+  });
+  if (!document.querySelector('input[name="bizType"]:checked')) { showErr('err-bizType'); valid = false; } else { hideErr('err-bizType'); }
+  if (!valid) { document.getElementById('section1').scrollIntoView({ behavior: 'smooth' }); return; }
+  document.getElementById('section1').style.display = 'none';
+  document.getElementById('section2').classList.add('active');
+  document.getElementById('dot1').classList.remove('active');
+  document.getElementById('dot1').classList.add('done');
+  document.getElementById('dot1').querySelector('.dot-circle').textContent = '✓';
+  document.getElementById('dot2').classList.add('active');
+  document.getElementById('heroSection').style.display = 'none';
+  document.getElementById('valueSection').style.display = 'none';
+  document.getElementById('progressBar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function goToSection1() {
+  document.getElementById('section2').classList.remove('active');
+  document.getElementById('section1').style.display = 'block';
+  document.getElementById('section1').classList.add('active');
+  document.getElementById('dot2').classList.remove('active');
+  document.getElementById('dot1').classList.remove('done');
+  document.getElementById('dot1').classList.add('active');
+  document.getElementById('dot1').querySelector('.dot-circle').textContent = '1';
+  document.getElementById('heroSection').style.display = 'block';
+  document.getElementById('valueSection').style.display = 'block';
+  document.getElementById('heroSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function validateTrucks() {
+  const cards = document.querySelectorAll('.truck-card');
+  if (cards.length === 0) { alert('נא להוסיף לפחות משאית אחת'); return false; }
+  let valid = true;
+  cards.forEach(card => {
+    const id = card.id.replace('truck-', '');
+    const typeEl = document.getElementById(`truckType${id}`);
+    const bodyEl = document.getElementById(`truckBody${id}`);
+    const plateEl = document.getElementById(`truckPlate${id}`);
+    const dimEl = document.getElementById(`truckDimensions${id}`);
+    const weightEl = document.getElementById(`truckWeight${id}`);
+    if (!typeEl?.value) { typeEl?.classList.add('error'); showErr(`err-truckType${id}`); valid = false; } else { typeEl.classList.remove('error'); hideErr(`err-truckType${id}`); }
+    if (!bodyEl?.value) { bodyEl?.classList.add('error'); showErr(`err-truckBody${id}`); valid = false; } else { bodyEl.classList.remove('error'); hideErr(`err-truckBody${id}`); }
+    if (!dimEl?.value.trim()) { dimEl?.classList.add('error'); showErr(`err-truckDimensions${id}`); valid = false; } else { dimEl.classList.remove('error'); hideErr(`err-truckDimensions${id}`); }
+    if (!weightEl?.value.trim()) { weightEl?.classList.add('error'); showErr(`err-truckWeight${id}`); valid = false; } else { weightEl.classList.remove('error'); hideErr(`err-truckWeight${id}`); }
+    if (!plateEl?.value.replace(/[^0-9]/g,'').length >= 7) { plateEl?.classList.add('error'); showErr(`err-truckPlate${id}`); valid = false; } else { plateEl.classList.remove('error'); hideErr(`err-truckPlate${id}`); }
+  });
+  return valid;
+}
+
+function buildBizSummary() {
+  const bizSummary = document.getElementById('bizSummary');
+  if (!bizSummary) return;
+  const name = document.getElementById('fullName')?.value || '';
+  const bizName = document.getElementById('businessName')?.value || '';
+  const bizType = document.querySelector('input[name="bizType"]:checked')?.value || '';
+  const bizId = document.getElementById('bizId')?.value || '';
+  const address = document.getElementById('address')?.value || '';
+  const phone = document.getElementById('phone')?.value || '';
+  const email = document.getElementById('email')?.value || '';
+  bizSummary.innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+      <div><span style="color:#6b7280; font-size:12px;">שם מלא</span><br><strong>${name}</strong></div>
+      <div><span style="color:#6b7280; font-size:12px;">שם עסק</span><br><strong>${bizName}</strong></div>
+      <div><span style="color:#6b7280; font-size:12px;">סוג עסק</span><br><strong>${bizType}</strong></div>
+      <div><span style="color:#6b7280; font-size:12px;">ח.פ / עוסק מורשה</span><br><strong>${bizId}</strong></div>
+      <div><span style="color:#6b7280; font-size:12px;">כתובת</span><br><strong>${address}</strong></div>
+      <div><span style="color:#6b7280; font-size:12px;">טלפון</span><br><strong>${phone}</strong></div>
+      <div style="grid-column:1/-1;"><span style="color:#6b7280; font-size:12px;">אימייל</span><br><strong>${email}</strong></div>
+    </div>`;
+}
+
+function openEditModal() {
+  document.getElementById('e_fullName').value = document.getElementById('fullName')?.value || '';
+  document.getElementById('e_businessName').value = document.getElementById('businessName')?.value || '';
+  document.getElementById('e_bizId').value = document.getElementById('bizId')?.value || '';
+  document.getElementById('e_address').value = document.getElementById('address')?.value || '';
+  document.getElementById('e_phone').value = document.getElementById('phone')?.value || '';
+  document.getElementById('e_email').value = document.getElementById('email')?.value || '';
+  const currentBizType = document.querySelector('input[name="bizType"]:checked')?.value;
+  document.querySelectorAll('input[name="e_bizType"]').forEach(r => { r.checked = r.value === currentBizType; });
+  document.getElementById('editModal').style.display = 'block';
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+}
+
+function saveEditModal() {
+  document.getElementById('fullName').value = document.getElementById('e_fullName').value;
+  document.getElementById('businessName').value = document.getElementById('e_businessName').value;
+  document.getElementById('bizId').value = document.getElementById('e_bizId').value;
+  document.getElementById('address').value = document.getElementById('e_address').value;
+  document.getElementById('phone').value = document.getElementById('e_phone').value;
+  document.getElementById('email').value = document.getElementById('e_email').value;
+  const newBizType = document.querySelector('input[name="e_bizType"]:checked')?.value;
+  document.querySelectorAll('input[name="bizType"]').forEach(r => { r.checked = r.value === newBizType; });
+  closeEditModal();
+  buildBizSummary();
+}
+
+function goToSection3() {
+  if (!validateTrucks()) return;
+  buildBizSummary();
+  // Build summary
+  const cards = document.querySelectorAll('.truck-card');
+  const summaryList = document.getElementById('truckSummaryList');
+  const summaryTitle = document.getElementById('summaryTitle');
+  summaryTitle.textContent = `המשאיות שלי (${cards.length})`;
+  summaryList.innerHTML = '';
+  cards.forEach(card => {
+    const id = card.id.replace('truck-', '');
+    const type = document.getElementById(`truckType${id}`)?.value || '';
+    const body = document.getElementById(`truckBody${id}`)?.value || '';
+    const plate = document.getElementById(`truckPlate${id}`)?.value || '';
+    const year = document.getElementById(`truckYear${id}`)?.value || '';
+    const weight = document.getElementById(`truckWeight${id}`)?.value || '';
+    const dimensions = document.getElementById(`truckDimensions${id}`)?.value || '';
+    const accessories = document.getElementById(`truckAccessories${id}`)?.value || '';
+    const div = document.createElement('div');
+    div.className = 'summary-truck-item';
+    div.innerHTML = `<div class="summary-truck-info">
+      <strong>🚛 משאית ${id} — ${type}</strong><br>
+      ${body ? `מרכב: ${body}` : ''}${plate ? ` | רישוי: ${plate}` : ''}${year ? ` | ${year}` : ''}${weight ? ` | ${weight} טון` : ''}${dimensions ? `<br>מידות: ${dimensions}` : ''}${accessories ? `<br>אביזרים: ${accessories}` : ''}
+    </div>`;
+    summaryList.appendChild(div);
+  });
+  document.getElementById('section2').classList.remove('active');
+  document.getElementById('section3').classList.add('active');
+  document.getElementById('dot2').classList.remove('active');
+  document.getElementById('dot2').classList.add('done');
+  document.getElementById('dot2').querySelector('.dot-circle').textContent = '✓';
+  document.getElementById('dot3').classList.add('active');
+  document.getElementById('progressBar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function backToSection2() {
+  document.getElementById('section3').classList.remove('active');
+  document.getElementById('section2').classList.add('active');
+  document.getElementById('dot3').classList.remove('active');
+  document.getElementById('dot2').classList.remove('done');
+  document.getElementById('dot2').classList.add('active');
+  document.getElementById('dot2').querySelector('.dot-circle').textContent = '2';
+  document.getElementById('progressBar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ====== SUBMIT ======
+async function submitForm() {
+  // ולידציה שלב 3 — חובה לבחור יש/אין קו קבוע
+  if (!document.querySelector('input[name="hasRoute"]:checked')) {
+    const routeErr = document.getElementById('err-hasRoute');
+    if (routeErr) { routeErr.style.display = 'block'; }
+    document.getElementById('routeSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  document.getElementById('err-hasRoute') && (document.getElementById('err-hasRoute').style.display = 'none');
+
+  const btn = document.getElementById('submitBtn');
+  const text = document.getElementById('submitText');
+  const spinner = document.getElementById('submitSpinner');
+  btn.disabled = true; text.style.display = 'none'; spinner.style.display = 'block';
+
+  // בניית מחרוזת משאיות קריאה לשיטס
+  const trucksLines = [];
+  document.querySelectorAll('.truck-card').forEach((card, i) => {
+    const id = card.id.replace('truck-', '');
+    const type        = document.getElementById(`truckType${id}`)?.value || '';
+    const body        = document.getElementById(`truckBody${id}`)?.value || '';
+    const dimensions  = document.getElementById(`truckDimensions${id}`)?.value || '';
+    const weight      = document.getElementById(`truckWeight${id}`)?.value || '';
+    const plate       = document.getElementById(`truckPlate${id}`)?.value || '';
+    const year        = document.getElementById(`truckYear${id}`)?.value || '';
+    const notes       = document.getElementById(`truckNotes${id}`)?.value || '';
+    let line = `משאית ${i+1}: ${type} | מרכב: ${body} | רישוי: ${plate}`;
+    if (dimensions) line += ` | מידות: ${dimensions}`;
+    if (weight)     line += ` | ${weight} טון`;
+    if (year)       line += ` | שנת ${year}`;
+    if (notes)      line += ` | הערות: ${notes}`;
+    trucksLines.push(line);
+  });
+
+  // בניית מחרוזת קו קבוע קריאה לשיטס
+  const hasRoute = document.querySelector('input[name="hasRoute"]:checked')?.value || 'לא';
+  const routeLines = [];
+  if (hasRoute === 'כן') {
+    daysOfWeek.forEach(day => {
+      const cb = document.getElementById(`day-check-${day}`);
+      if (cb && cb.checked) {
+        const from  = document.getElementById(`day-from-${day}`)?.value || '';
+        const to    = document.getElementById(`day-to-${day}`)?.value || '';
+        const notes = document.getElementById(`day-notes-${day}`)?.value || '';
+        let line = `יום ${day}`;
+        if (from) line += `: מ-${from}`;
+        if (to)   line += ` ל-${to}`;
+        if (notes) line += ` (${notes})`;
+        routeLines.push(line);
+      }
+    });
+  }
+
+  const data = {
+    fullName:       document.getElementById('fullName').value,
+    businessName:   document.getElementById('businessName').value,
+    bizType:        document.querySelector('input[name="bizType"]:checked')?.value,
+    bizId:          document.getElementById('bizId').value,
+    address:        document.getElementById('address').value,
+    phone:          document.getElementById('phone').value,
+    email:          document.getElementById('email').value,
+    trucksCount:    document.querySelectorAll('.truck-card').length,
+    trucks:         trucksLines.join('\n'),
+    hasRoute:       hasRoute,
+    routeDays:      routeLines.length ? routeLines.join('\n') : 'אין',
+    registrationDate: new Date().toLocaleDateString('he-IL'),
+  };
+
+  try {
+    await fetch(SHEET_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  } catch(e) {
+    btn.disabled = false; text.style.display = 'inline'; spinner.style.display = 'none';
+    alert('אירעה שגיאה בשליחה. אנא נסה שוב או צור קשר בוואטסאפ: 050-4951951');
+    return;
+  }
+
+  document.getElementById('section3').classList.remove('active');
+  document.getElementById('successScreen').classList.add('active');
+  document.getElementById('dot3').classList.remove('active');
+  document.getElementById('dot3').classList.add('done');
+  document.getElementById('dot3').querySelector('.dot-circle').textContent = '✓';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+['fullName','businessName','bizId','address','phone','email'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', () => clearError(id));
+});
+
+addTruck();
+</script>
+</body>
+</html>
